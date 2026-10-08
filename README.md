@@ -53,6 +53,10 @@ FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()))
 WHERE "auto_suspend" IS NULL OR "auto_suspend" > 600;
 ```
 
+## Projects
+
+- [Platform Observability](platform_observability/): a dbt-built history database for Snowflake object changes, query activity, and Cortex usage.
+
 ## License
 
 MIT
