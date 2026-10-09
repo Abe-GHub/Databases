@@ -34,7 +34,7 @@ PLATFORM_OBSERVABILITY
 |---|---|---|
 | 1 | [Discovery & validation notebook](notebooks/01_discovery_validation.ipynb) | Ready to run |
 | 2 | [Infrastructure setup notebook](notebooks/02_infrastructure_setup.ipynb) and [runnable script](setup/02_infrastructure_setup.sql): database, schemas, warehouse, roles, dbt service user, grants | Ready to run |
-| 3 | dbt project scaffold, sources, staging models | Planned |
+| 3 | [dbt project](dbt/): scaffold, sources, 4 staging models, tests, dbt Cloud setup guide | Ready to run |
 | 4 | Object change history models and tests | Planned |
 | 5 | Activity history models and tests | Planned |
 | 6 | Cortex usage history and marts | Planned |
@@ -44,3 +44,4 @@ PLATFORM_OBSERVABILITY
 
 - **Step 1:** import `notebooks/01_discovery_validation.ipynb` into Snowsight (*Projects > Notebooks > Import .ipynb file*) and run it with a role that has `IMPORTED PRIVILEGES` on the `SNOWFLAKE` database. All queries are read-only.
 - **Step 2:** read `notebooks/02_infrastructure_setup.ipynb` for the walkthrough, then run `setup/02_infrastructure_setup.sql` in a Snowsight SQL worksheet as a user holding `ACCOUNTADMIN`. It switches between admin roles, which Snowflake Notebooks don't support. Replace the two placeholders first.
+- **Step 3:** follow [dbt/README.md](dbt/README.md) to connect dbt Cloud (project subdirectory `platform_observability/dbt`), then run `dbt build --select staging`.

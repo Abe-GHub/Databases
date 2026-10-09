@@ -1,0 +1,52 @@
+name: platform_observability
+version: "1.0.0"
+config-version: 2
+require-dbt-version: ">=1.10.0"
+
+# dbt Cloud ignores this; it is used only if you run dbt Core locally.
+profile: platform_observability
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+analysis-paths: ["analyses"]
+
+clean-targets: ["target", "dbt_packages"]
+
+vars:
+  # Days re-read from ACCOUNT_USAGE on every incremental run, to pick up
+  # rows that arrive late (ACCOUNT_USAGE lags real time by up to ~3 hours,
+  # and long-running queries land after they finish).
+  lookback_days: 3
+
+  # History older than this is purged (2 years).
+  retention_days: 730
+
+  # Earliest date loaded on the initial backfill. ACCOUNT_USAGE only holds
+  # ~365 days, so anything earlier is simply not available.
+  backfill_start_date: "2025-01-01"
+
+  # Days of data dbt tests scan, so tests stay cheap on large views.
+  test_window_days: 3
+
+models:
+  platform_observability:
+    +copy_grants: true
+
+    staging:
+      +schema: STAGING
+      +materialized: view
+
+    history:
+      +schema: HISTORY
+      +materialized: incremental
+      +incremental_strategy: merge
+      +on_schema_change: append_new_columns
+      # SAFEGUARD: HISTORY holds data Snowflake no longer retains.
+      # A --full-refresh would rebuild from ACCOUNT_USAGE and silently
+      # discard everything older than ~365 days. Never set this to true.
+      +full_refresh: false
+
+    marts:
+      +schema: MARTS
+      +materialized: table

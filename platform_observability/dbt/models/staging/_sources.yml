@@ -1,0 +1,50 @@
+version: 2
+
+sources:
+  - name: account_usage
+    description: >
+      Snowflake's shared ACCOUNT_USAGE views. They lag real time by up to
+      ~3 hours and retain ~365 days, which is why this project persists
+      them into PLATFORM_OBSERVABILITY.HISTORY.
+    database: SNOWFLAKE
+    schema: ACCOUNT_USAGE
+    quoting:
+      database: false
+      schema: false
+      identifier: false
+
+    tables:
+      - name: query_history
+        description: Every query run in the account, one row per query.
+        config:
+          loaded_at_field: start_time
+          freshness:
+            warn_after: { count: 6, period: hour }
+            error_after: { count: 24, period: hour }
+
+      - name: access_history
+        description: >
+          Objects read and written by each query. OBJECT_MODIFIED_BY_DDL
+          records CREATE / ALTER / DROP / REPLACE / UNDROP events and drives
+          the object change history. Enterprise edition only.
+        config:
+          loaded_at_field: query_start_time
+          freshness:
+            warn_after: { count: 6, period: hour }
+            error_after: { count: 24, period: hour }
+
+      - name: users
+        description: All users in the account, including dropped users (DELETED_ON is set).
+
+      - name: cortex_ai_functions_usage_history
+        description: >
+          Cortex AI Function usage aggregated into one-hour windows per query.
+          Data starts January 2026; USER_ID attribution starts mid-February 2026.
+          Additional Cortex services (Agents, Analyst, Snowflake Intelligence,
+          Cortex Code, Search) are added in Step 6 once Step 1 confirms which
+          views exist in this account.
+        config:
+          loaded_at_field: start_time
+          freshness:
+            warn_after: { count: 6, period: hour }
+            error_after: { count: 24, period: hour }

@@ -1,0 +1,81 @@
+version: 2
+
+# Tests are limited to the last `test_window_days` days so they stay cheap
+# against ACCOUNT_USAGE views that can hold hundreds of millions of rows.
+
+models:
+  - name: stg_account_usage__query_history
+    description: One row per query, with a derived activity category.
+    columns:
+      - name: query_id
+        tests:
+          - not_null:
+              config:
+                where: "start_time >= dateadd(day, -{{ var('test_window_days') }}, current_timestamp())"
+          - unique:
+              config:
+                where: "start_time >= dateadd(day, -{{ var('test_window_days') }}, current_timestamp())"
+      - name: activity_category
+        description: >
+          SESSION_CONTROL, DCL, DDL_CREATE, DDL_ALTER, DDL_DROP, DML,
+          DATA_LOAD_UNLOAD, QUERY, PROCEDURE_CALL, EXECUTION, METADATA, OTHER.
+          Mapping lives in macros/categorize_query_type.sql.
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['SESSION_CONTROL', 'DCL', 'DDL_CREATE', 'DDL_ALTER', 'DDL_DROP', 'DML',
+                         'DATA_LOAD_UNLOAD', 'QUERY', 'PROCEDURE_CALL', 'EXECUTION', 'METADATA', 'OTHER']
+              config:
+                where: "start_time >= dateadd(day, -{{ var('test_window_days') }}, current_timestamp())"
+
+  - name: stg_account_usage__ddl_events
+    description: One row per CREATE / ALTER / DROP / REPLACE / UNDROP event.
+    columns:
+      - name: query_id
+        tests:
+          - not_null:
+              config:
+                where: "event_time >= dateadd(day, -{{ var('test_window_days') }}, current_timestamp())"
+      - name: object_name
+        tests:
+          - not_null:
+              config:
+                where: "event_time >= dateadd(day, -{{ var('test_window_days') }}, current_timestamp())"
+      - name: change_type
+        description: CREATED, REPLACED, ALTERED, DROPPED, RESTORED, or OTHER for an unexpected operation type.
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['CREATED', 'REPLACED', 'ALTERED', 'DROPPED', 'RESTORED']
+              config:
+                severity: warn
+                where: "event_time >= dateadd(day, -{{ var('test_window_days') }}, current_timestamp())"
+
+  - name: stg_account_usage__users
+    description: All users, including dropped ones, for resolving USER_ID to a person.
+    columns:
+      - name: user_id
+        tests:
+          - not_null
+          - unique
+
+  - name: stg_account_usage__cortex_ai_functions_usage
+    description: Cortex AI Function usage in one-hour windows per query.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: ['query_id', 'window_start_time', 'function_name', 'model_name']
+          config:
+            severity: warn
+            where: "window_start_time >= dateadd(day, -{{ var('test_window_days') }}, current_timestamp())"
+    columns:
+      - name: user_id
+        description: Null for usage before mid-February 2026, when Snowflake began recording it.
+        tests:
+          - relationships:
+              arguments:
+                to: ref('stg_account_usage__users')
+                field: user_id
+              config:
+                severity: warn
+                where: "window_start_time >= dateadd(day, -{{ var('test_window_days') }}, current_timestamp())"

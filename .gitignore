@@ -1,0 +1,15 @@
+# dbt build output
+target/
+dbt_packages/
+logs/
+
+# Credentials: never commit keys
+*.p8
+*.pem
+*.key
+profiles.yml
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
