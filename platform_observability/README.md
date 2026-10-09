@@ -33,13 +33,14 @@ PLATFORM_OBSERVABILITY
 | Step | Deliverable | Status |
 |---|---|---|
 | 1 | [Discovery & validation notebook](notebooks/01_discovery_validation.ipynb) | Ready to run |
-| 2 | Database, schemas, warehouse, dbt service user, role, grants | Pending Step 1 results |
+| 2 | [Infrastructure setup notebook](notebooks/02_infrastructure_setup.ipynb) and [runnable script](setup/02_infrastructure_setup.sql): database, schemas, warehouse, roles, dbt service user, grants | Ready to run |
 | 3 | dbt project scaffold, sources, staging models | Planned |
 | 4 | Object change history models and tests | Planned |
 | 5 | Activity history models and tests | Planned |
 | 6 | Cortex usage history and marts | Planned |
 | 7 | Daily schedule, backfill, retention purge | Planned |
 
-## Running the notebook
+## Running the steps
 
-Import `notebooks/01_discovery_validation.ipynb` into Snowsight (*Projects > Notebooks > Import .ipynb file*) and run it with a role that has `IMPORTED PRIVILEGES` on the `SNOWFLAKE` database. All queries are read-only.
+- **Step 1:** import `notebooks/01_discovery_validation.ipynb` into Snowsight (*Projects > Notebooks > Import .ipynb file*) and run it with a role that has `IMPORTED PRIVILEGES` on the `SNOWFLAKE` database. All queries are read-only.
+- **Step 2:** read `notebooks/02_infrastructure_setup.ipynb` for the walkthrough, then run `setup/02_infrastructure_setup.sql` in a Snowsight SQL worksheet as a user holding `ACCOUNTADMIN`. It switches between admin roles, which Snowflake Notebooks don't support. Replace the two placeholders first.
